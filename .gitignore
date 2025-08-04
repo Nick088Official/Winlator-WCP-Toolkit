@@ -1,0 +1,15 @@
+# Bytecode and compiled files that Python generates automatically
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Generated output folders
+_wcp_output/
+_source_archives/
+
+# Temporary extraction folders
+*_temp_extraction/
+
+# WCP files should not be in the source code repository
+*.wcp
