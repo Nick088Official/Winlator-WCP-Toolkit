@@ -10,7 +10,7 @@ A toolkit for Windows & Android users to package various Winlator contents like 
 ## Want Pre-converted `.wcp` files?
 This GitHub Repository is about information on what exactly and how to make `.wcp` files.
 All compiled packages are available in the repository:
-### -> [Winlator-WCP-Collection](https://github.com/Nick088Official/Winlator-WCP-Collections) <-
+### -> [Winlator-WCP-Collections](https://github.com/Nick088Official/Winlator-WCP-Collections) <-
 
 ---
 
@@ -32,11 +32,11 @@ All compiled packages are available in the repository:
 1.  Get Termux from [F-Droid](https://f-droid.org/).
 2.  Open Termux and paste the following command. This will download the script and run it.
     ```sh
-    curl -sL https://raw.githubusercontent.com/Nick088Official/Winlator-WCP-Toolkit/main/wcp_tools.sh | bash
+    curl -sL https://raw.githubusercontent.com/Nick088Official/Winlator-WCP-Toolkit/refs/heads/master/wcp_tools.sh | bash
     ```
     The script will perform a one-time setup, installing all necessary tools and asking for storage permission. Please grant it.
 
-3.  Download the precompiled archives you want to convert (check [here](https://github.com/Nick088Official/Winlator-WCP-Toolkit/blob/main/README.md#finding-pre-compiled-component-files)) and make sure they are in your phone's main `/Download` folder.
+3.  Download the precompiled archives you want to convert (check [here](https://github.com/Nick088Official/Winlator-WCP-Toolkit/?tab=readme-ov-file#finding-pre-compiled-component-files)) and make sure they are in your phone's main `/Download` folder.
 4.  After setup, a menu will appear. Choose the "Batch Convert" option. The script will find all compatible files in your `Download` folder, convert them, and organize the results automatically.
 
 
@@ -53,7 +53,7 @@ All compiled packages are available in the repository:
         ```sh
         git clone https://github.com/Nick088Official/Winlator-WCP-Toolkit.git
         ```
-    - or just **download** the zip file from [here](https://github.com/Nick088Official/Winlator-WCP-Toolkit/archive/refs/heads/main.zip) and unzip it
+    - or just **download** the zip file from [here](https://github.com/Nick088Official/Winlator-WCP-Toolkit/archive/refs/heads/master.zip) and unzip it
 2.  **Navigate to the project directory:**
     ```sh
     cd Winlator-WCP-Toolkit
@@ -71,7 +71,7 @@ This is the recommended method for most users.
 
 **Script:** `batch_converter.py`
 
-1.  **Download Files:** Get pre-compiled archives from [here](https://github.com/Nick088Official/Winlator-WCP-Toolkit/blob/main/README.md#finding-pre-compiled-component-files). Place them all into a single folder (e.g., `C:\Users\YourUser\Downloads\WCP_Staging`).
+1.  **Download Files:** Get pre-compiled archives from [here](https://github.com/Nick088Official/Winlator-WCP-Toolkit/?tab=readme-ov-file#finding-pre-compiled-component-files). Place them all into a single folder (e.g., `C:\Users\YourUser\Downloads\WCP_Staging`).
 2.  **Run the Script:**
     ```sh
     python batch_converter.py
@@ -177,7 +177,7 @@ To compile a specific release tag or commit hash instead of the latest code, you
 | **DXVK-Sarek** | [github.com/pythonlover02/DXVK-Sarek/releases](https://github.com/pythonlover02/DXVK-Sarek/releases) | The `.tar.gz` file |
 | **DXVK-GPLAsync** | [https://gitlab.com/Ph42oN/dxvk-gplasync/-/releases](https://github.com/pythonlover02/DXVK-Sarek/releases) | The `.tar.gz` file |
 | **vkd3d-proton** | [github.com/HansKristian-Work/vkd3d-proton/releases](https://github.com/HansKristian-Work/vkd3d-proton/releases) | The `.tar.zst` file |
-| **FEX-Emu (Linux)** | [TGP-17's Fork FEX GitHub Actions](https://github.com/TGP-17/FEX/actions/workflows/Compile-FEXCore.yml) (or check ([here](https://github.com/Nick088Official/Winlator-WCP-Toolkit/blob/main/README.md#how-to-use-the-compile-fexcoreyml-workflow-advanced)) | `FEXCore DLLs.zip` |
+| **FEX-Emu (Linux)** | [TGP-17's Fork FEX GitHub Actions](https://github.com/TGP-17/FEX/actions/workflows/Compile-FEXCore.yml) (or check ([here](https://github.com/Nick088Official/Winlator-WCP-Toolkit/?tab=readme-ov-file#how-to-use-the-compile-fexcoreyml-workflow-advanced)) | `FEXCore DLLs.zip` |
 | **Official DXVK** | [github.com/doitsujin/dxvk/releases](https://github.com/doitsujin/dxvk/releases) | The `.tar.gz` file (e.g., `dxvk-2.3.tar.gz`) |
 
 
