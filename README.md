@@ -92,7 +92,7 @@ The FEX-Emu project's build system has evolved significantly over time. The cust
 
 ### Step 1: Prepare Your Repository (One-Time Setup)
 
-1.  **Fork the Repository:** Go to **https://github.com/FEX-Emu/FEX** and click the **"Fork"** button.
+1.  **Fork the Repository:** Go to **https://github.com/FEX-Emu/FEX** and click the **"Fork"** button. Don't copy only the `main` branch.
 2.  **Create a Build Branch:** In your forked repository, create a new branch named **`ci-test`** from the `main` branch.
 3.  **Set as Default Branch:** Go to your fork's **Settings -> Branches**. Under "Default branch", switch from `main` to **`ci-test`** and click "Update".
 4.  **Add/Modify Files:** In your `ci-test` branch, make the following changes:
