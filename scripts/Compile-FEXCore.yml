@@ -1,0 +1,93 @@
+name: Compile FEXCore
+
+on:
+  push:
+    branches:
+      - "ci-test" # This workflow ONLY runs on pushes to the ci-test branch
+
+jobs:
+  compile-fexcore:
+    runs-on: ubuntu-24.04-arm
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+         
+      - name: Install Nix Package Manager
+        uses: cachix/install-nix-action@v31
+        with:
+         nix_path: nixpkgs=channel:nixos-unstable
+        
+      - name: Compile FEXCore
+        run: |
+          mkdir -p build/arm64ec && cd build/arm64ec
+          ../../Data/nix/cmake_configure_woa64.sh ../../ -G Ninja
+          ninja
+          mkdir ../wow64 && cd ../wow64
+          ../../Data/nix/cmake_configure_woa32.sh ../../ -G Ninja
+          ninja
+
+      - name: Package FEXCore DLLs and WCP
+        id: package
+        run: |
+          # --- Intelligent Build Type Detection ---
+          COMMIT_MSG="${{ github.event.head_commit.message }}"
+          
+          if [[ "$COMMIT_MSG" == *"Build: Prepare FEX tag"* ]]; then
+            # --- THIS IS A RELEASE BUILD (triggered by the script) ---
+            echo "Detected a Release build."
+            # Extract the full tag name, e.g., "FEX-2507"
+            VERSION_NAME_FULL=$(echo "$COMMIT_MSG" | sed -n 's/Build: Prepare FEX tag \(FEX-[0-9.]\+\)/\1/p')
+            # --- NEW: Create a short version without the "FEX-" prefix ---
+            VERSION_NAME_SHORT=$(echo "$VERSION_NAME_FULL" | sed 's/FEX-//')
+            
+            VERSION_CODE=0
+            DESCRIPTION="FEXCore $VERSION_NAME_FULL Release"
+            ARTIFACT_NAME="FEXCore-${VERSION_NAME_SHORT}"
+            WCP_FILENAME="FEXCore-${VERSION_NAME_SHORT}.wcp"
+            # Use the full, descriptive name inside the profile.json
+            PROFILE_VERSION_NAME="$VERSION_NAME_FULL"
+          else
+            # --- THIS IS A NIGHTLY BUILD (triggered by a direct push) ---
+            echo "Detected a Nightly build."
+            TODAY_DATE=$(date +'%Y%m%d')
+            VERSION_NAME="Nightly-$TODAY_DATE"
+            
+            VERSION_CODE=$TODAY_DATE
+            DESCRIPTION="FEXCore Nightly Build"
+            ARTIFACT_NAME="FEXCore-$VERSION_NAME"
+            WCP_FILENAME="FEXCore-$VERSION_NAME.wcp"
+            PROFILE_VERSION_NAME="$VERSION_NAME"
+          fi
+          
+          # Make artifact name available to the upload step
+          echo "ARTIFACT_NAME=${ARTIFACT_NAME}" >> $GITHUB_ENV
+          
+          echo "Preparing package with artifact name: $ARTIFACT_NAME"
+          
+          # Stage files for packaging
+          mkdir -p build_output/FEXCore_WCP/system32
+          cp -r ./build/arm64ec/Bin/libarm64ecfex.dll ./build_output/
+          cp -r ./build/wow64/Bin/libwow64fex.dll ./build_output/
+          cp -r ./build/arm64ec/Bin/libarm64ecfex.dll ./build_output/FEXCore_WCP/system32
+          cp -r ./build/wow64/Bin/libwow64fex.dll ./build_output/FEXCore_WCP/system32
+          
+          wget -q https://github.com/TGP-17/wcp-template/raw/refs/heads/main/FEXCore/profile.json -O ./build_output/FEXCore_WCP/profile.json
+          
+          # Modify the profile.json with the correct variables
+          cd ./build_output/FEXCore_WCP
+          echo "Updating profile.json with versionName='$PROFILE_VERSION_NAME', versionCode='$VERSION_CODE', description='$DESCRIPTION'"
+          jq --arg name "$PROFILE_VERSION_NAME" --argjson code "$VERSION_CODE" --arg desc "$DESCRIPTION" \
+             '.versionName = $name | .versionCode = $code | .description = $desc' profile.json > temp.json && mv temp.json profile.json
+          
+          # Package the WCP file
+          tar --zstd -cf "$WCP_FILENAME" profile.json system32
+          mv "$WCP_FILENAME" ../
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+         name: ${{ env.ARTIFACT_NAME }}
+         path: ./build_output/

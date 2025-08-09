@@ -18,7 +18,7 @@ All compiled packages are available in the repository:
 
 - **Conversion:** Convert pre-compiled files to `.wcp`.
 - **Platform Support:** Windows & Android (Termux).
-- **Contents Support:** DXVK (Official, Sarek, Async, Gplasync), vkd3d-proton.
+- **Contents Support:** DXVK (Official, Sarek, Async, Gplasync), vkd3d-proton and FEXCore (partially).
 - **Documented Information:** about FEXCore, how to install, the different dvxk versions.
 - **Batch Processing:** A master script (`batch_converter.py`) can scan and convert an entire folder of archives at once, then organize the results.
 - **Modular and Expandable:** The project is structured to easily add new scripts for other contents in the future, possibly.
@@ -85,88 +85,73 @@ This is the recommended method for most users.
 
 ## How to Use the `Compile-FEXCore.yml` Workflow (Advanced)
 
-This section documents an advanced method for building your own FEX DLLs and WCP files using GitHub's servers. It requires setting up your own fork of the FEX-Emu repository.
+This section documents an advanced method for building your own FEX DLLs for Windows on ARM using GitHub's servers. The process is semi-automated, with a one-time setup and a single, cross-platform Python script to trigger builds.
 
-### Step 1: Prepare Your Repository (Choose One Option)
+### Why are older FEX versions not supported?
+The FEX-Emu project's build system has evolved significantly over time. The custom build scripts used in this workflow are based on the **modern** FEX structure. Older tags (before `FEX-2507`) used a different system and are missing key files that the modern scripts require. Attempting to compile old code with modern build instructions will fail.
 
-#### Option A: Fork the Pre-Patched Repository (Recommended)
-This is the simplest method, as all necessary changes are already included.
-1.  Go to **[https://github.com/TGP-17/FEX](https://github.com/TGP-17/FEX)**.
-2.  Click the **"Fork"** button in the top-right corner to create your own copy.
-3.  In your forked repository's settings, set the **"ci-test"** branch as your default branch. You will work from this branch.
-4.  This fork already contains the corrected build scripts and the `.yml` workflow file. Proceed to **Step 2**.
+### Step 1: Prepare Your Repository (One-Time Setup)
 
-#### Option B: Fork the Official Repository and Apply Patches Manually
-Use this method if you want to build directly from the official FEX-Emu source code.
-1.  Go to **[https://github.com/FEX-Emu/FEX](https://github.com/FEX-Emu/FEX)** and **fork** it.
-2.  In your forked repository, create a new branch named **"ci-test"** from the `master` branch. Set "ci-test" as your default branch in the repository settings.
-3.  You must **add the [`Compile-FEXCore.yml` file](https://raw.githubusercontent.com/TGP-17/FEX/refs/heads/ci-test/.github/workflows/Compile-FEXCore.yml)** to the `.github/workflows/` directory in your new "ci-test" branch.
-4.  Next, apply a small but critical code change. In your repository, edit the following two files:
-    -   `Data/nix/cmake_configure_woa32.sh`
-    -   `Data/nix/cmake_configure_woa64.sh`
-5.  In each file, find the line that starts with `cmake $FEX_CMAKE_TOOLCHAIN...` and add the flag `-DTUNE_CPU=none` to the end of that line.
-6.  **Commit** these changes to your "ci-test" branch. Proceed to **Step 2**.
+1.  **Fork the Repository:** Go to **https://github.com/FEX-Emu/FEX** and click the **"Fork"** button.
+2.  **Create a Build Branch:** In your forked repository, create a new branch named **`ci-test`** from the `main` branch.
+3.  **Set as Default Branch:** Go to your fork's **Settings -> Branches**. Under "Default branch", switch from `main` to **`ci-test`** and click "Update".
+4.  **Add/Modify Files:** In your `ci-test` branch, make the following changes:
+    -   Add the **[`Compile-FEXCore.yml`](https://raw.githubusercontent.com/Nick088Official/Winlator-WCP-Toolkit/master/scripts/Compile-FEXCore.yml)** file to a new `.github/workflows/` directory.
+    -   Edit `Data/nix/cmake_configure_woa32.sh` and `Data/nix/cmake_configure_woa64.sh`. In each file, find the line that starts with `cmake $FEX_CMAKE_TOOLCHAIN...` and add the flag `-DTUNE_CPU=none` to the end of that line.
+5.  **Commit** these changes to your `ci-test` branch. Your fork is now a dedicated "build machine".
 
-### Step 2: Running the Workflow (After Setup)
-1.  Go to the **"Actions"** tab of your forked repository.
-2.  Select **"Compile FEXCore"** from the list of workflows on the left.
-3.  Click the **"Run workflow"** button on the right.
-4.  Wait for the job to complete. Once finished, find the **"Artifacts"** section on the summary page and download the `FEXCore DLLs` zip file. This artifact contains the compiled `.dll` files and the final `.wcp` package.
+### Step 2: Running the Build Automation Script
 
-### Step 3: Building a Specific Version (Optional, Expert)
-Because forks do not include the original repository's release tags, you must use the **commit hash** to build a specific version.
+The provided Python script works on **Windows, Linux, macOS, and Android (Termux)** to remotely instruct your fork to build specific versions.
 
-1.  **Edit the Workflow File:** Open `.github/workflows/Compile-FEXCore.yml` in your fork's "ci-test" branch.
-2.  **Add an Input to the Trigger:** Modify the `on:` block at the top of the file to include an `inputs` section for `workflow_dispatch`.
+1.  **Prerequisites:**
+    -   **Python:** Must be installed.
+    -   **GitHub CLI:** Must be installed.
+        -   On Windows/macOS/Linux, see the [official guide](https://cli.github.com/).
+        -   On Termux, run `pkg install python git gh`.
+    -   **Authentication:** You must be logged in to your GitHub account. Open a terminal and run `gh auth login`.
 
-    **Change this:**
-    ```yml
-    on:
-      push:
-      pull_request:
-      workflow_dispatch:
-    ```
-    **To this:**
-    ```yml
-    on:
-      push:
-      pull_request:
-      workflow_dispatch:
-        inputs:
-          fex_version_ref:
-            description: 'Enter a branch name or commit hash to build'
-            required: false
-            default: 'main'
-    ```
-3.  **Modify the Checkout Step:** Find the "Checkout repository" step and tell it to use your new input.
+2.  **Run the Automation Script:**
+    Choose the method that best fits your platform.
 
-    **Change this:**
-    ```yml
-    - name: Checkout repository
-      uses: actions/checkout@v4
-      with:
-        submodules: recursive
-    ```
-    **To this:**
-    ```yml
-    - name: Checkout repository
-      uses: actions/checkout@v4
-      with:
-        ref: ${{ github.event.inputs.fex_version_ref }}
-        submodules: recursive
-    ```
-4.  **Commit** these changes.
-5.  **Run the Customized Workflow:**
-    -   Go to your fork's **Actions** tab -> **Compile FEXCore** -> **Run workflow**.
-    -   You will now see a new input field: **"Enter a branch name or commit hash to build"**.
-    -   **To build a specific release:**
-        1.  Go to the **official** FEX-Emu repository's **[Releases page](https://github.com/FEX-Emu/FEX/releases)**.
-        2.  Find the release you want (e.g., `FEX-2405`) and click on the **commit hash** link next to the tag name.
-        3.  On the new page, copy the full commit hash (the long string of letters and numbers).
-        4.  Paste this hash into the input field in your Actions workflow.
-    -   Leave the field blank to build the latest `main` branch code.
-    -   Click the green "Run workflow" button to start the build.
+    #### On Android (Quick Script Method)
+    This is the recommended method for Termux as it only downloads the single script you need, saving space.
+    1.  Download the script using `curl`:
+        ```sh
+        curl -O https://raw.githubusercontent.com/YourUsername/Winlator-WCP-Toolkit/main/scripts/trigger_fex_builds.py
+        ```
+    2.  Run the script:
+        ```sh
+        python trigger_fex_builds.py
+        ```
 
+    #### On Windows (Full Toolkit Method)
+    This is the recommended method for PC users as it downloads the entire toolkit.
+    1.  Clone the repository and navigate into it:
+        ```sh
+        git clone https://github.com/YourUsername/Winlator-WCP-Toolkit.git
+        cd Winlator-WCP-Toolkit
+        ```
+    2.  Run the script:
+        ```sh
+        python scripts/trigger_fex_builds.py
+        ```
+
+    After running the script with either method, it will present a menu with several options.
+
+3.  **Build Modes Explained:**
+    -   **Build ALL compatible tags:** Finds and builds all FEX tags from `FEX-2507` onwards.
+    -   **Build a SINGLE specific tag:** Prompts for a tag name (e.g., `FEX-2508`).
+    -   **Build a specific commit or latest `main` (Nightly):**
+        -   Enter a **commit hash** (e.g., `a1b2c3d`) to build a specific unreleased version.
+        -   Enter **`main`** to build the very latest code from the official FEX repository.
+
+### Step 3: Downloading the Artifact
+After any workflow is complete, go to its summary page in your fork's "Actions" tab. At the bottom, under the **"Artifacts"** section, you will find a `.zip` file containing the compiled `.dll` files and the final `.wcp` package.
+
+
+
+---
 
 ## General Information
 
@@ -179,7 +164,7 @@ Because forks do not include the original repository's release tags, you must us
 | **DXVK-Sarek** | [github.com/pythonlover02/DXVK-Sarek/releases](https://github.com/pythonlover02/DXVK-Sarek/releases) | The `.tar.gz` file |
 | **DXVK-GPLAsync** | [https://gitlab.com/Ph42oN/dxvk-gplasync/-/releases](https://github.com/pythonlover02/DXVK-Sarek/releases) | The `.tar.gz` file |
 | **vkd3d-proton** | [github.com/HansKristian-Work/vkd3d-proton/releases](https://github.com/HansKristian-Work/vkd3d-proton/releases) | The `.tar.zst` file |
-| **FEX-Emu (Linux)** | [TGP-17's Fork FEX GitHub Actions](https://github.com/TGP-17/FEX/actions/workflows/Compile-FEXCore.yml) (or check ([here](https://github.com/Nick088Official/Winlator-WCP-Toolkit/?tab=readme-ov-file#how-to-use-the-compile-fexcoreyml-workflow-advanced)) | `FEXCore DLLs.zip` |
+| **FEX-Emu (Linux)** | [TGP-17's Fork FEX GitHub Actions](https://github.com/TGP-17/FEX/actions/workflows/Compile-FEXCore.yml) (or check ([HERE](https://github.com/Nick088Official/Winlator-WCP-Toolkit/?tab=readme-ov-file#how-to-use-the-compile-fexcoreyml-workflow-advanced)) | `FEXCore DLLs.zip` |
 | **Official DXVK** | [github.com/doitsujin/dxvk/releases](https://github.com/doitsujin/dxvk/releases) | The `.tar.gz` file (e.g., `dxvk-2.3.tar.gz`) |
 
 
@@ -250,4 +235,4 @@ This name is short, unique, and allows you to easily find the exact code it was 
 The whole code in this repository has been written from scratch, but there's some concepts or infos gathered:
 - .wcp general/conversion infos: https://github.com/longjunyu2/winlator/releases, [Convos on the EmuGear International Discord Server](https://discord.com/invite/q842JB4gCm), [r/EmulationOnAndroid](https://www.reddit.com/r/EmulationOnAndroid/), [r/Winlator](https://www.reddit.com/r/Winlator/]
 - dxvk conversion core concept inspiration: https://raw.githubusercontent.com/ajay9634/Ajay-prefix/Resources/Termux-scripts/dxvk-wcp.sh, https://raw.githubusercontent.com/ajay9634/Ajay-prefix/Resources/Termux-scripts/dxvk-dev-wcp.sh 
-- the documented fexcore winlator fixed workflow: [TGP-17](https://github.com/FEX-Emu/FEX/compare/main...TGP-17:FEX:ci-test)
+- the documented fexcore winlator fixed workflow (and also inspiration for the one in the project): [TGP-17](https://github.com/FEX-Emu/FEX/compare/main...TGP-17:FEX:ci-test)
