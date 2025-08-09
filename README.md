@@ -85,38 +85,38 @@ This is the recommended method for most users.
 
 ## How to Use the `Compile-FEXCore.yml` Workflow (Advanced)
 
-This part is only for documenting (not related to the repository code), and is an advanced method which allows you to build your own FEX DLLs and WCP using GitHub's servers. It requires setting up your own fork.
+This section documents an advanced method for building your own FEX DLLs and WCP files using GitHub's servers. It requires setting up your own fork of the FEX-Emu repository.
 
 ### Step 1: Prepare Your Repository (Choose One Option)
 
 #### Option A: Fork the Pre-Patched Repository (Recommended)
-This is the simplest way, as all necessary changes are already included.
+This is the simplest method, as all necessary changes are already included.
 1.  Go to **[https://github.com/TGP-17/FEX](https://github.com/TGP-17/FEX)**.
 2.  Click the **"Fork"** button in the top-right corner to create your own copy.
-3.  This fork already contains the corrected build scripts and the `.yml` workflow file.
-4.  Once forked, you can proceed directly to **"Step 2: Running the Workflow"** below.
+3.  In your forked repository's settings, set the **"ci-test"** branch as your default branch. You will work from this branch.
+4.  This fork already contains the corrected build scripts and the `.yml` workflow file. Proceed to **Step 2**.
 
 #### Option B: Fork the Official Repository and Apply Patches Manually
 Use this method if you want to build directly from the official FEX-Emu source code.
 1.  Go to **[https://github.com/FEX-Emu/FEX](https://github.com/FEX-Emu/FEX)** and **fork** it.
-2.  In your forked repository, you must **add the [`Compile-FEXCore.yml` file](https://raw.githubusercontent.com/TGP-17/FEX/refs/heads/ci-test/.github/workflows/Compile-FEXCore.yml)** to the `.github/workflows/` directory. Create these folders if they do not exist.
-3.  Next, you must apply a small but critical code change. In your repository, navigate to and edit the following two files:
+2.  In your forked repository, create a new branch named **"ci-test"** from the `master` branch. Set "ci-test" as your default branch in the repository settings.
+3.  You must **add the [`Compile-FEXCore.yml` file](https://raw.githubusercontent.com/TGP-17/FEX/refs/heads/ci-test/.github/workflows/Compile-FEXCore.yml)** to the `.github/workflows/` directory in your new "ci-test" branch.
+4.  Next, apply a small but critical code change. In your repository, edit the following two files:
     -   `Data/nix/cmake_configure_woa32.sh`
     -   `Data/nix/cmake_configure_woa64.sh`
-4.  In each file, find the line that starts with `cmake $FEX_CMAKE_TOOLCHAIN...` and add the flag `-DTUNE_CPU=none` to the end of that line.
-5.  **Commit** these changes to your repository.
-6.  Proceed to **"Step 2: Running the Workflow"**.
+5.  In each file, find the line that starts with `cmake $FEX_CMAKE_TOOLCHAIN...` and add the flag `-DTUNE_CPU=none` to the end of that line.
+6.  **Commit** these changes to your "ci-test" branch. Proceed to **Step 2**.
 
 ### Step 2: Running the Workflow (After Setup)
-1.  Go to the **"Actions"** tab of **your forked repository**.
+1.  Go to the **"Actions"** tab of your forked repository.
 2.  Select **"Compile FEXCore"** from the list of workflows on the left.
 3.  Click the **"Run workflow"** button on the right.
 4.  Wait for the job to complete. Once finished, find the **"Artifacts"** section on the summary page and download the `FEXCore DLLs` zip file. This artifact contains the compiled `.dll` files and the final `.wcp` package.
 
 ### Step 3: Building a Specific Version (Optional, Expert)
-To compile a specific release tag or commit hash instead of the latest code, you need to modify the `Compile-FEXCore.yml` file in your fork.
+Because forks do not include the original repository's release tags, you must use the **commit hash** to build a specific version.
 
-1.  **Edit the Workflow File:** Open `.github/workflows/Compile-FEXCore.yml` in your repository.
+1.  **Edit the Workflow File:** Open `.github/workflows/Compile-FEXCore.yml` in your fork's "ci-test" branch.
 2.  **Add an Input to the Trigger:** Modify the `on:` block at the top of the file to include an `inputs` section for `workflow_dispatch`.
 
     **Change this:**
@@ -134,9 +134,9 @@ To compile a specific release tag or commit hash instead of the latest code, you
       workflow_dispatch:
         inputs:
           fex_version_ref:
-            description: 'Enter a tag, branch, or commit hash to build'
+            description: 'Enter a branch name or commit hash to build'
             required: false
-            default: 'master'
+            default: 'main'
     ```
 3.  **Modify the Checkout Step:** Find the "Checkout repository" step and tell it to use your new input.
 
@@ -157,13 +157,15 @@ To compile a specific release tag or commit hash instead of the latest code, you
     ```
 4.  **Commit** these changes.
 5.  **Run the Customized Workflow:**
-    -   Go to the "Actions" tab -> "Compile FEXCore" -> "Run workflow".
-    -   You will now see a new input field: **"Enter a tag, branch, or commit hash to build"**.
-    -   **To build a release:** Go to the FEX "Releases" page, find the version you want (e.g., `FEX-2405`), and enter that tag into the field.
-    -   **To build a commit:** Go to the "Commits" page, find the commit you want, copy its short hash (e.g., `a1b2c3d`), and paste it into the field.
-    -   Leave the field blank to build the latest `master` branch as default.
+    -   Go to your fork's **Actions** tab -> **Compile FEXCore** -> **Run workflow**.
+    -   You will now see a new input field: **"Enter a branch name or commit hash to build"**.
+    -   **To build a specific release:**
+        1.  Go to the **official** FEX-Emu repository's **[Releases page](https://github.com/FEX-Emu/FEX/releases)**.
+        2.  Find the release you want (e.g., `FEX-2405`) and click on the **commit hash** link next to the tag name.
+        3.  On the new page, copy the full commit hash (the long string of letters and numbers).
+        4.  Paste this hash into the input field in your Actions workflow.
+    -   Leave the field blank to build the latest `main` branch code.
     -   Click the green "Run workflow" button to start the build.
-
 
 
 ## General Information
