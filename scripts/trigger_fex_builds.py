@@ -96,12 +96,21 @@ def main():
                     commit_sha = main_branch_info["commit"]["sha"]
                     trigger_build(repo_path, build_branch, f"main-{commit_sha[:7]}", commit_sha, custom_files)
             else:
-                # Basic validation for a commit hash
-                if len(commit_input) < 7 or not all(c in '0123456789abcdef' for c in commit_input.lower()):
-                    print("[ERROR] Invalid commit hash format.")
+                #  resolve the user's short 7 character hash to the full 40-character SHA.
+                if len(commit_input) < 7:
+                    print("[ERROR] Invalid commit hash format. Must be at least 7 characters.")
                 else:
-                    # We assume the hash exists. The API will fail if it doesn't.
-                    trigger_build(repo_path, build_branch, f"commit-{commit_input[:7]}", commit_input, custom_files)
+                    print(f"Resolving commit hash '{commit_input}'...")
+                    # GitHub API allows using a short hash to get a commit's details.
+                    commit_info = run_gh_api_command(f"/repos/FEX-Emu/FEX/commits/{commit_input}")
+                    if commit_info and "sha" in commit_info:
+                        # 'sha' field in the response contains the full 40-character hash.
+                        full_commit_sha = commit_info["sha"]
+                        print(f"Found full commit: {full_commit_sha}")
+                        # pass the full hash to our trigger function.
+                        trigger_build(repo_path, build_branch, f"main-{commit_input[:7]}", full_commit_sha, custom_files)
+                    else:
+                        print(f"[ERROR] Could not find commit matching '{commit_input}' in the official repository.")
 
         elif choice.lower() == 'q': break
         else: print("Invalid choice. Please try again.")

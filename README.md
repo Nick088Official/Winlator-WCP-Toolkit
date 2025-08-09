@@ -104,6 +104,9 @@ The FEX-Emu project's build system has evolved significantly over time. The cust
 
 The provided Python script works on **Windows, Linux, macOS, and Android (Termux)** to remotely instruct your fork to build specific versions.
 
+#### A Note on Commit Hashes
+When the script asks you to build a specific commit, you **only need to provide the short hash** (the first 7 characters, e.g., `095b2a8`). This is easier to copy and is all that's needed to identify the exact version, as the script will automatically get the 40 full character commit.
+
 1.  **Prerequisites:**
     -   **Python:** Must be installed.
     -   **GitHub CLI:** Must be installed.

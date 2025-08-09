@@ -35,30 +35,33 @@ jobs:
           # --- Intelligent Build Type Detection ---
           COMMIT_MSG="${{ github.event.head_commit.message }}"
           
-          if [[ "$COMMIT_MSG" == *"Build: Prepare FEX tag"* ]]; then
-            # --- THIS IS A RELEASE BUILD (triggered by the script) ---
+          # Use Bash regex matching to check for the specific 'FEX-xxxx' tag pattern
+          if [[ $COMMIT_MSG =~ Build:\ Prepare\ FEX\ tag\ (FEX-[0-9.]+) ]]; then
+            # --- THIS IS A RELEASE BUILD (triggered by the script for a tag) ---
             echo "Detected a Release build."
-            # Extract the full tag name, e.g., "FEX-2507"
-            VERSION_NAME_FULL=$(echo "$COMMIT_MSG" | sed -n 's/Build: Prepare FEX tag \(FEX-[0-9.]\+\)/\1/p')
-            # --- NEW: Create a short version without the "FEX-" prefix ---
+            VERSION_NAME_FULL="${BASH_REMATCH[1]}"
             VERSION_NAME_SHORT=$(echo "$VERSION_NAME_FULL" | sed 's/FEX-//')
             
             VERSION_CODE=0
             DESCRIPTION="FEXCore $VERSION_NAME_FULL Release"
             ARTIFACT_NAME="FEXCore-${VERSION_NAME_SHORT}"
             WCP_FILENAME="FEXCore-${VERSION_NAME_SHORT}.wcp"
-            # Use the full, descriptive name inside the profile.json
             PROFILE_VERSION_NAME="$VERSION_NAME_FULL"
           else
-            # --- THIS IS A NIGHTLY BUILD (triggered by a direct push) ---
-            echo "Detected a Nightly build."
-            TODAY_DATE=$(date +'%Y%m%d')
-            VERSION_NAME="Nightly-$TODAY_DATE"
+            # --- THIS IS A DEV BUILD (main, commit, or direct push) ---
+            echo "Detected a Dev/Nightly build."
+            # Extract the reference from the commit message, e.g., "main-095b2a8"
+            VERSION_NAME=$(echo "$COMMIT_MSG" | sed -n 's/Build: Prepare FEX tag \(.*\)/\1/p')
+            # If the pattern wasn't matched (e.g., a direct push), create a generic nightly name
+            if [ -z "$VERSION_NAME" ]; then
+              VERSION_NAME="nightly-$(echo ${{ github.sha }} | cut -c1-7)"
+            fi
             
+            TODAY_DATE=$(date +'%Y%m%d')
             VERSION_CODE=$TODAY_DATE
-            DESCRIPTION="FEXCore Nightly Build"
-            ARTIFACT_NAME="FEXCore-$VERSION_NAME"
-            WCP_FILENAME="FEXCore-$VERSION_NAME.wcp"
+            DESCRIPTION="FEXCore Dev Build ($VERSION_NAME)"
+            ARTIFACT_NAME="FEXCore-${VERSION_NAME}"
+            WCP_FILENAME="FEXCore-${VERSION_NAME}.wcp"
             PROFILE_VERSION_NAME="$VERSION_NAME"
           fi
           
