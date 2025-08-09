@@ -2,6 +2,10 @@
 
 A toolkit for Windows & Android users to package various Winlator contents like DXVK, vkd3d-proton, and FEX-Emu into `.wcp` files. This contains both info related to `.wcp` files, where to find them, and code for conversions.
 
+**NOTE: THIS REPOSITORY IS MAINLY FOR WINLATOR BIONIC FORKS**
+
+---
+
 
 ## What is `.wcp`?
 
