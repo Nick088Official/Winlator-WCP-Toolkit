@@ -78,7 +78,7 @@ def main():
             print(f"\nFound {len(tags_to_build)} compatible tags to build.")
             for tag_name in tags_to_build:
                 success = trigger_build(repo_path, build_branch, tag_name, all_tags[tag_name], custom_files)
-                if success: print(f"    Waiting 60 seconds before next tag..."); time.sleep(60)
+                if success: print(f"    Waiting 30 seconds before next tag..."); time.sleep(30)
             print("\nAll build workflows have been triggered.")
             
         elif choice == '2':

@@ -1,0 +1,115 @@
+name: Compile Box64 for Winlator Bionic
+
+on:
+  workflow_dispatch:
+    inputs:
+      box64_version_ref:
+        description: 'Enter a tag, branch, or commit short 7 characters hash to build (e.g., v0.3.6)'
+        required: true
+        default: 'main'
+  push:
+    branches:
+      - "main"
+
+jobs:
+  compile-box64-bionic:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Box64 Repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.box64_version_ref || github.ref }}
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: Install Build Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y git cmake make python3 patchelf p7zip wget
+          echo "Downloading Android NDK..."
+          wget -q https://dl.google.com/android/repository/android-ndk-r26b-linux.zip
+          unzip -qq android-ndk-r26b-linux.zip
+          
+      - name: Compile Box64 (Bionic Target)
+        run: |
+          NDK_COMPILER=$PWD/android-ndk-r26b/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android31-clang
+          mkdir build && cd build
+          cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=${NDK_COMPILER} -DANDROID=1 -DARM_DYNAREC=1 -DBAD_SIGNAL=1
+          make -j$(nproc)
+
+      - name: Package Box64 WCP
+        id: package
+        run: |
+          # --- Intelligent Version Naming Logic ---
+          REF_NAME_RAW="${{ github.event.inputs.box64_version_ref || github.ref_name }}"
+          SHORT_COMMIT=$(git rev-parse --short HEAD)
+          
+          # Check if the reference is a release tag (starts with 'v' and contains at least one '.').
+          if [[ "$REF_NAME_RAW" == v*.* ]]; then
+            # --- THIS IS A RELEASE BUILD ---
+            echo "Detected a Release build for tag: $REF_NAME_RAW"
+            VERSION_NAME=$(echo "$REF_NAME_RAW" | sed 's/v//') # Remove the 'v' prefix, e.g., "0.3.6"
+            VERSION_CODE=0
+            DESCRIPTION="Box64 ${VERSION_NAME} Release."
+            ARTIFACT_NAME="Box64-${VERSION_NAME}"
+          else
+            # --- THIS IS A DEV BUILD (main, commit, or branch) ---
+            echo "Detected a Dev build for ref: $REF_NAME_RAW"
+            
+            # Check if the input is a commit hash (7-40 hex characters).
+            if [[ "$REF_NAME_RAW" =~ ^[0-9a-f]{7,40}$ ]]; then
+              # If it's a hash, use 'main' as the prefix for consistency.
+              REF_PREFIX="main"
+            else
+              # Otherwise, it's a branch name. Sanitize and use it.
+              REF_PREFIX=$(echo "$REF_NAME_RAW" | sed 's/[^a-zA-Z0-9._-]/_/g')
+            fi
+            
+            VERSION_NAME="${REF_PREFIX}-${SHORT_COMMIT}"
+            VERSION_CODE=1
+            DESCRIPTION="Box64-${VERSION_NAME}."
+            ARTIFACT_NAME="Box64-${VERSION_NAME}"
+          fi
+          
+          # Make variables available to subsequent steps.
+          echo "VERSION_NAME=${VERSION_NAME}" >> $GITHUB_ENV
+          echo "ARTIFACT_NAME=${ARTIFACT_NAME}" >> $GITHUB_ENV
+          
+          echo "Preparing package with artifact name: $ARTIFACT_NAME"
+          
+          # Stage files for packaging.
+          mkdir -p build_output/Box64_WCP
+          cp ./build/box64 ./build_output/
+          cp ./build/box64 ./build_output/Box64_WCP/
+          
+          cd ./build_output/Box64_WCP
+          
+          # Create profile.json from scratch using the correct variables.
+          cat <<EOF > profile.json
+          {
+            "type": "Box64",
+            "versionName": "${VERSION_NAME}",
+            "versionCode": ${VERSION_CODE},
+            "description": "${DESCRIPTION}",
+            "files": [
+              {
+                "source": "box64",
+                "target": "\${bindir}/box64"
+              }
+            ]
+          }
+          EOF
+
+          echo "Generated profile.json:"
+          cat profile.json
+          
+          WCP_FILENAME="${ARTIFACT_NAME}.wcp"
+          tar --zstd -cf "$WCP_FILENAME" box64 profile.json
+          mv "$WCP_FILENAME" ../
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+         name: ${{ env.ARTIFACT_NAME }}
+         path: ./build_output/

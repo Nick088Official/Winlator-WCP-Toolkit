@@ -22,7 +22,7 @@ All compiled packages are available in the repository:
 
 - **Conversion:** Convert pre-compiled files to `.wcp`.
 - **Platform Support:** Windows & Android (Termux).
-- **Contents Support:** DXVK (Official, Sarek, Async, Gplasync), vkd3d-proton and FEXCore (partially).
+- **Contents Support:** DXVK (Official, Sarek, Async, Gplasync), vkd3d-proton, Box64 (partially) and FEXCore (partially).
 - **Documented Information:** about FEXCore, how to install, the different dvxk versions.
 - **Batch Processing:** A master script (`batch_converter.py`) can scan and convert an entire folder of archives at once, then organize the results.
 - **Modular and Expandable:** The project is structured to easily add new scripts for other contents in the future, possibly.
@@ -87,14 +87,16 @@ This is the recommended method for most users.
 
 ---
 
-## How to Use the `Compile-FEXCore.yml` Workflow (Advanced)
+## Building FEXCore
+
+### For Bionic 
 
 This section documents an advanced method for building your own FEX DLLs for Windows on ARM using GitHub's servers. The process is semi-automated, with a one-time setup and a single, cross-platform Python script to trigger builds.
 
 ### Why are older FEX versions not supported?
 The FEX-Emu project's build system has evolved significantly over time. The custom build scripts used in this workflow are based on the **modern** FEX structure. Older tags (before `FEX-2507`) used a different system and are missing key files that the modern scripts require. Attempting to compile old code with modern build instructions will fail.
 
-### Step 1: Prepare Your Repository (One-Time Setup)
+### Step 1: Prepare Your Repository
 
 1.  **Fork the Repository:** Go to **https://github.com/FEX-Emu/FEX** and click the **"Fork"** button. Don't copy only the `main` branch.
 2.  **Create a Build Branch:** In your forked repository, create a new branch named **`ci-test`** from the `main` branch.
@@ -125,7 +127,7 @@ When the script asks you to build a specific commit, you **only need to provide 
     This is the recommended method for Termux as it only downloads the single script you need, saving space.
     1.  Download the script using `curl`:
         ```sh
-        curl -O https://raw.githubusercontent.com/YourUsername/Winlator-WCP-Toolkit/main/scripts/trigger_fex_builds.py
+        curl -O https://raw.githubusercontent.com/Nick088Official/Winlator-WCP-Toolkit/main/scripts/trigger_fex_builds.py
         ```
     2.  Run the script:
         ```sh
@@ -136,7 +138,7 @@ When the script asks you to build a specific commit, you **only need to provide 
     This is the recommended method for PC users as it downloads the entire toolkit.
     1.  Clone the repository and navigate into it:
         ```sh
-        git clone https://github.com/YourUsername/Winlator-WCP-Toolkit.git
+        git clone https://github.com/Nick088Official/Winlator-WCP-Toolkit.git
         cd Winlator-WCP-Toolkit
         ```
     2.  Run the script:
@@ -160,6 +162,76 @@ After any workflow is complete, go to its summary page in your fork's "Actions" 
 
 ---
 
+## Building Box64
+
+### For Bionic 
+
+This toolkit provides a reference GitHub Actions workflow for building Box64 for Bionic-based Winlator versions.
+
+#### Why are older Box64 versions not supported?
+Older tags (before **`v0.2.8`**) used a different configuration and are not compatible with this automated build process, which will cause them to fail. The automation scripts are therefore designed to only build recent, compatible versions.
+
+#### A Note on Commit Hashes
+In the Manual Build way, if you're looking to build a specific commit, you **only need to provide the short hash** (the first 7 characters, e.g., `7b755bb`). This is easier to copy and is all that's needed to identify the exact version, as the `Compile-Box64.yml` script will automatically get the 40 full character commit.
+
+#### Step 1: Prepare Your Repository (One-Time Setup)
+1.  **Fork the official [Box64 repository](https://github.com/ptitSeb/box64)**. Don't copy only the `main` branch.
+2.  **Add the [`Compile-Box64.yml`](https://raw.githubusercontent.com/Nick088Official/Winlator-WCP-Toolkit/master/scripts/Compile-Box64.yml)** workflow file to the `.github/workflows/` directory in your fork's `main` branch.
+
+#### Step 2: Running a Build
+
+You can trigger a build in two ways:
+
+##### A) Manual Build (For a single, specific version)
+1.  Go to the **"Actions"** tab of your forked repository.
+2.  Select **"Compile Box64 for Winlator Bionic"** from the list of workflows.
+3.  Click the **"Run workflow"** button.
+4.  In the input box, enter the specific tag (e.g., `v0.3.6`) or short commit hash you want to build. Leave it as `main` to build the latest code.
+5.  Click the green "Run workflow" button.
+
+##### B) Automated Batch Build (To build all recent release tags at once)
+1.  **Prerequisites:**
+    -   **Python:** Must be installed.
+    -   **GitHub CLI:** Must be installed.
+        -   On Windows/macOS/Linux, see the [official guide](https://cli.github.com/).
+        -   On Termux, run `pkg install python git gh`.
+    -   **Authentication:** You must be logged in to your GitHub account. Open a terminal and run `gh auth login`.
+
+2.  **Run the Automation Script:**
+    Choose the method that best fits your platform.
+
+    #### On Android (Quick Script Method)
+    This is the recommended method for Termux as it only downloads the single script you need, saving space.
+    1.  Download the script using `curl`:
+        ```sh
+        curl -O https://raw.githubusercontent.com/Nick088Official/Winlator-WCP-Toolkit/main/scripts/trigger_fex_builds.py
+        ```
+    2.  Run the script:
+        ```sh
+        python trigger_fex_builds.py
+        ```
+
+    #### On Windows (Full Toolkit Method)
+    This is the recommended method for PC users as it downloads the entire toolkit.
+    1.  Clone the repository and navigate into it:
+        ```sh
+        git clone https://github.com/Nick088Official/Winlator-WCP-Toolkit.git
+        cd Winlator-WCP-Toolkit
+        ```
+    2.  Run the script:
+        ```sh
+        python scripts/trigger_fex_builds.py
+        ```
+
+    Enter your GitHub username and fork name. The script will automatically find all compatible tags from **`v0.2.8` onwards** and trigger a build for each one.
+
+### Step 3: Downloading the Artifact
+After any workflow is complete, go to its summary page in your fork's "Actions" tab. At the bottom, under the **"Artifacts"** section, you will find a `.zip` file containing the compiled `.dll` files and the final `.wcp` package.
+
+
+
+---
+
 ## General Information
 
 ### Finding Pre-Compiled Component Files
@@ -171,8 +243,8 @@ After any workflow is complete, go to its summary page in your fork's "Actions" 
 | **DXVK-Sarek** | [github.com/pythonlover02/DXVK-Sarek/releases](https://github.com/pythonlover02/DXVK-Sarek/releases) | The `.tar.gz` file |
 | **DXVK-GPLAsync** | [https://gitlab.com/Ph42oN/dxvk-gplasync/-/releases](https://github.com/pythonlover02/DXVK-Sarek/releases) | The `.tar.gz` file |
 | **vkd3d-proton** | [github.com/HansKristian-Work/vkd3d-proton/releases](https://github.com/HansKristian-Work/vkd3d-proton/releases) | The `.tar.zst` file |
-| **FEX-Emu (Linux)** | [TGP-17's Fork FEX GitHub Actions](https://github.com/TGP-17/FEX/actions/workflows/Compile-FEXCore.yml) (or check ([HERE](https://github.com/Nick088Official/Winlator-WCP-Toolkit/?tab=readme-ov-file#how-to-use-the-compile-fexcoreyml-workflow-advanced)) | `FEXCore DLLs.zip` |
-| **Official DXVK** | [github.com/doitsujin/dxvk/releases](https://github.com/doitsujin/dxvk/releases) | The `.tar.gz` file (e.g., `dxvk-2.3.tar.gz`) |
+| **FEX-Emu (Linux)** | [TGP-17's Fork FEX GitHub Actions](https://github.com/TGP-17/FEX/actions/workflows/Compile-FEXCore.yml) (or check ([HERE](https://github.com/Nick088Official/Winlator-WCP-Toolkit/?tab=readme-ov-file#building-fexcore)) | `FEXCore DLLs.zip` |
+| **Box64** | [github.com/Nick088Official/box64/](https://github.com/Nick088Official/box64/actions/workflows/Compile-Box64.yml) (or check ([HERE](https://github.com/Nick088Official/Winlator-WCP-Toolkit/?tab=readme-ov-file#building-box64)) | `Box64-vx.x.x.zip` or `Box64-main-xxxxxxx.zip` |
 
 
 ### How the WCP Conversion Works
